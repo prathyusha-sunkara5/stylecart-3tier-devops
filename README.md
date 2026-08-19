@@ -1,6 +1,7 @@
 # StyleCart — 3-Tier Fashion E-Commerce DevOps Project
 
 StyleCart is a simple three-tier fashion e-commerce application designed for AWS/DevOps project readiness.
+This project demonstrates an end-to-end DevOps workflow using Git, Docker, Jenkins, and AWS.
 
 ## Stack
 - Frontend: React + Vite + Nginx
