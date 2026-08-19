@@ -1,0 +1,31 @@
+{
+  "family": "stylecart-backend",
+  "networkMode": "awsvpc",
+  "requiresCompatibilities": ["FARGATE"],
+  "cpu": "256",
+  "memory": "512",
+  "containerDefinitions": [
+    {
+      "name": "backend",
+      "image": "REPLACE_ECR_BACKEND_IMAGE",
+      "essential": true,
+      "portMappings": [
+        { "containerPort": 4000, "protocol": "tcp" }
+      ],
+      "healthCheck": {
+        "command": ["CMD-SHELL", "wget -q -O - http://localhost:4000/api/health || exit 1"],
+        "interval": 30,
+        "timeout": 5,
+        "retries": 3,
+        "startPeriod": 15
+      },
+      "environment": [
+        { "name": "PORT", "value": "4000" },
+        { "name": "DB_HOST", "value": "REPLACE_RDS_ENDPOINT" },
+        { "name": "DB_PORT", "value": "3306" },
+        { "name": "DB_NAME", "value": "stylecart" },
+        { "name": "DB_USER", "value": "stylecart" }
+      ]
+    }
+  ]
+}
