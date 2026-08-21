@@ -49,3 +49,5 @@ For deployment, configure the environment variables at the top of Jenkinsfile:
 The ECS task-definition templates are in `infra/ecs/`.
 
 > Do not commit AWS passwords, access keys, database passwords, or `.env` files.
+
+CI/CD Poll SCM test - Fri Aug 21 20:18:11 IST 2026
