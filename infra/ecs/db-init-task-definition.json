@@ -1,0 +1,48 @@
+{
+  "family": "stylecart-db-init-task",
+  "networkMode": "awsvpc",
+  "requiresCompatibilities": ["FARGATE"],
+  "cpu": "256",
+  "memory": "512",
+  "executionRoleArn": "arn:aws:iam::955501536964:role/ecsTaskExecutionRole",
+  "containerDefinitions": [
+    {
+      "name": "stylecart-db-init",
+      "image": "955501536964.dkr.ecr.ap-south-1.amazonaws.com/stylecart-db-init:latest",
+      "essential": true,
+      "environment": [
+        {
+          "name": "DB_HOST",
+          "value": "stylecart-db.cpq62k0moibo.ap-south-1.rds.amazonaws.com"
+        },
+        {
+          "name": "DB_PORT",
+          "value": "3306"
+        },
+        {
+          "name": "DB_NAME",
+          "value": "stylecart"
+        },
+        {
+          "name": "DB_USER",
+          "value": "admin"
+        }
+      ],
+      "secrets": [
+        {
+          "name": "DB_PASSWORD",
+          "valueFrom": "arn:aws:secretsmanager:ap-south-1:955501536964:secret:stylecart/rds/password-Uiz8CU:DB_PASSWORD::"
+        }
+      ],
+      "logConfiguration": {
+        "logDriver": "awslogs",
+        "options": {
+          "awslogs-group": "/ecs/stylecart-db-init-task",
+          "awslogs-region": "ap-south-1",
+          "awslogs-stream-prefix": "ecs",
+          "awslogs-create-group": "true"
+        }
+      }
+    }
+  ]
+}

@@ -1,0 +1,7 @@
+FROM mysql:8.0
+
+COPY schema.sql /init/schema.sql
+COPY seed.sql /init/seed.sql
+
+ENTRYPOINT ["sh", "-c"]
+CMD ["mysql -h \"$DB_HOST\" -P \"$DB_PORT\" -u \"$DB_USER\" -p\"$DB_PASSWORD\" \"$DB_NAME\" < /init/schema.sql && mysql -h \"$DB_HOST\" -P \"$DB_PORT\" -u \"$DB_USER\" -p\"$DB_PASSWORD\" \"$DB_NAME\" < /init/seed.sql && echo 'StyleCart database initialized successfully'"]
