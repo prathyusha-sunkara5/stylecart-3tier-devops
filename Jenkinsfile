@@ -22,6 +22,7 @@ pipeline {
     }
 
     stages {
+
         stage('Checkout') {
             steps {
                 checkout scm
@@ -31,8 +32,8 @@ pipeline {
         stage('Backend Tests') {
             steps {
                 dir('backend') {
-                    bat 'npm install'
-                    bat 'npm test'
+                    sh 'npm install'
+                    sh 'npm test'
                 }
             }
         }
@@ -40,17 +41,24 @@ pipeline {
         stage('Frontend Build Check') {
             steps {
                 dir('frontend') {
-                    bat 'npm install'
-                    bat 'npm run build'
+                    sh 'npm install'
+                    sh 'npm run build'
                 }
             }
         }
 
         stage('Docker Build') {
             steps {
-                bat '''
-                    docker build -t %ECR_REGISTRY%/%FRONTEND_REPOSITORY%:%IMAGE_TAG% -t %ECR_REGISTRY%/%FRONTEND_REPOSITORY%:latest ./frontend
-                    docker build -t %ECR_REGISTRY%/%BACKEND_REPOSITORY%:%IMAGE_TAG% -t %ECR_REGISTRY%/%BACKEND_REPOSITORY%:latest ./backend
+                sh '''
+                    docker build \
+                      -t $ECR_REGISTRY/$FRONTEND_REPOSITORY:$IMAGE_TAG \
+                      -t $ECR_REGISTRY/$FRONTEND_REPOSITORY:latest \
+                      ./frontend
+
+                    docker build \
+                      -t $ECR_REGISTRY/$BACKEND_REPOSITORY:$IMAGE_TAG \
+                      -t $ECR_REGISTRY/$BACKEND_REPOSITORY:latest \
+                      ./backend
                 '''
             }
         }
@@ -64,16 +72,18 @@ pipeline {
                         passwordVariable: 'AWS_SECRET_ACCESS_KEY'
                     )
                 ]) {
-                    bat '''
-                        aws ecr get-login-password --region %AWS_REGION% > ecr-password.txt
-                        type ecr-password.txt | docker login --username AWS --password-stdin %ECR_REGISTRY%
-                        del ecr-password.txt
+                    sh '''
+                        aws ecr get-login-password \
+                          --region $AWS_REGION | \
+                        docker login \
+                          --username AWS \
+                          --password-stdin $ECR_REGISTRY
 
-                        docker push %ECR_REGISTRY%/%FRONTEND_REPOSITORY%:%IMAGE_TAG%
-                        docker push %ECR_REGISTRY%/%FRONTEND_REPOSITORY%:latest
+                        docker push $ECR_REGISTRY/$FRONTEND_REPOSITORY:$IMAGE_TAG
+                        docker push $ECR_REGISTRY/$FRONTEND_REPOSITORY:latest
 
-                        docker push %ECR_REGISTRY%/%BACKEND_REPOSITORY%:%IMAGE_TAG%
-                        docker push %ECR_REGISTRY%/%BACKEND_REPOSITORY%:latest
+                        docker push $ECR_REGISTRY/$BACKEND_REPOSITORY:$IMAGE_TAG
+                        docker push $ECR_REGISTRY/$BACKEND_REPOSITORY:latest
                     '''
                 }
             }
@@ -88,9 +98,18 @@ pipeline {
                         passwordVariable: 'AWS_SECRET_ACCESS_KEY'
                     )
                 ]) {
-                    bat '''
-                        aws ecs update-service --cluster %ECS_CLUSTER% --service %FRONTEND_SERVICE% --force-new-deployment --region %AWS_REGION%
-                        aws ecs update-service --cluster %ECS_CLUSTER% --service %BACKEND_SERVICE% --force-new-deployment --region %AWS_REGION%
+                    sh '''
+                        aws ecs update-service \
+                          --cluster $ECS_CLUSTER \
+                          --service $FRONTEND_SERVICE \
+                          --force-new-deployment \
+                          --region $AWS_REGION
+
+                        aws ecs update-service \
+                          --cluster $ECS_CLUSTER \
+                          --service $BACKEND_SERVICE \
+                          --force-new-deployment \
+                          --region $AWS_REGION
                     '''
                 }
             }
@@ -105,8 +124,11 @@ pipeline {
                         passwordVariable: 'AWS_SECRET_ACCESS_KEY'
                     )
                 ]) {
-                    bat '''
-                        aws ecs wait services-stable --cluster %ECS_CLUSTER% --services %FRONTEND_SERVICE% %BACKEND_SERVICE% --region %AWS_REGION%
+                    sh '''
+                        aws ecs wait services-stable \
+                          --cluster $ECS_CLUSTER \
+                          --services $FRONTEND_SERVICE $BACKEND_SERVICE \
+                          --region $AWS_REGION
                     '''
                 }
             }
@@ -115,7 +137,7 @@ pipeline {
 
     post {
         always {
-            bat 'docker image prune -f'
+            sh 'docker image prune -f || true'
         }
 
         success {
